@@ -5,3 +5,4 @@ This will analyze image datasets stored in cloud storage and pull out latent fea
 
 ## Deep Embedding:
 We used a pre-trained Resnet-50 model to pull out valuable latent features from 224 x 224 RGB iamges. We cut off the last layer of the CNN to get the latent features after pooling without the actual classification. This can be found in lib/inference.py.
+![Resnet Image](lib/RESNET-50.png)
