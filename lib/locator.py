@@ -16,10 +16,18 @@ supabase: Client = create_client(supabase_url, supabase_key)
 openai.api_key = os.getenv('OPENAI_KEY')
 
 def extract_tuples(input_string):
-    """Extract tuples from the input string"""
-    tuple_regex = r"\(([^)]+)\)"
-    matches = re.findall(tuple_regex, input_string)
-    return [tuple(map(str.strip, match.split(','))) for match in matches]
+    inner_content = input_string.strip()[1:-1]
+    # Updated pattern to match inner tuples while ignoring the outermost parentheses
+    print(inner_content)
+    pattern = r'\(([^,]+),\s*([^)]+)\)'
+ 
+    # Find all tuples in the string using regex
+    matches = re.findall(pattern, inner_content)
+    
+    # Return the matches as a list of tuples
+    result = [(match[0].strip(), match[1].strip()) for match in matches]
+    
+    return result
 
 async def analyze_segmented_image(image_class, *image_urls):
     """Analyze segmented images using OpenAI"""
@@ -40,6 +48,8 @@ async def analyze_segmented_image(image_class, *image_urls):
         temperature=0.2
     )
     output = response.choices[0].message['content']
+    print(output)
+    print(extract_tuples(output))
     return extract_tuples(output)
 
 async def get_tags(image_class, existing, descriptor, definition):
@@ -50,8 +60,8 @@ async def get_tags(image_class, existing, descriptor, definition):
             {
                 "role": "user",
                 "content": f"""
-                Give a list of 10 or less possible common {descriptor} of {image_class}. Here is the definition of {descriptor}: {definition}. 
-                The list should not overlap with the existing lists: {existing}. Present as comma-separated.
+                Give a list of 10 or less possible common (descriptor: {descriptor}) of {image_class}. Here is the definition of (descriptor: {descriptor}): {definition}. 
+                The list should not overlap with the existing lists: {existing}. Present in the following form: (descriptor, [list of 10]).
                 """
             }
         ],

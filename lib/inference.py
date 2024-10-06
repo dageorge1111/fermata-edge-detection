@@ -8,8 +8,8 @@ import boto3
 from io import BytesIO
 import torch.nn as nn
 import numpy as np
-from locator import analyze_segmented_image
-from locator import get_tags 
+from .locator import analyze_segmented_image
+from .locator import get_tags 
 from torchvision import models
 from sklearn.ensemble import IsolationForest
 from supabase import create_client
@@ -107,7 +107,6 @@ def parse_output(output_str):
     return [(category.strip(), description.strip()) for category, description in matches]
 
 async def predict_fn(input_data, model):
-    print(input_data)
     (image_paths, object_ids, class_name), bucket_name = input_data
     latent_vectors = []
     image_dict = {}  # To store images for later use
@@ -133,7 +132,7 @@ async def predict_fn(input_data, model):
         image_key = image_paths[object_ids.index(outlier_id)]
         image_url = f"https://{bucket_name}.s3.amazonaws.com/{image_key}"  # Construct S3 image URL
         outlier_urls.append(image_url)
-#get_tags(image_class, existing, descriptor, definition):
+    # get_tags(image_class, existing, descriptor, definition):
     # Call the analyze_segmented_image function from locator.py
     image_analysis = await analyze_segmented_image(class_name, *outlier_urls)
 
@@ -143,6 +142,7 @@ async def predict_fn(input_data, model):
         tags = await get_tags(class_name, existing, i[0], i[1])
         existing += tags
         print(tags)
+    print(existing)
     return {"outlier_urls": outlier_urls, "class_name": class_name, "image_analysis": image_analysis}
 
 def output_fn(prediction, accept='application/json'):

@@ -1,6 +1,6 @@
 import os
 import json
-from inference2 import input_fn, model_fn, predict_fn, output_fn
+from lib.inference import input_fn, model_fn, predict_fn, output_fn
 from io import BytesIO
 import asyncio
 
