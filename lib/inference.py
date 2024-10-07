@@ -11,6 +11,7 @@ import numpy as np
 from .locator import analyze_segmented_image
 from .locator import get_tags 
 from .descriptor import create_jsonl_from_url_list
+from .sendBatch import process_batch
 from torchvision import models
 from sklearn.ensemble import IsolationForest
 from supabase import create_client
@@ -118,7 +119,6 @@ async def predict_fn(input_data, model):
         image_key = image_paths[object_ids.index(outlier_id)]
         image_url = f"https://{bucket_name}.s3.amazonaws.com/{image_key}"  
         outlier_urls.append([outlier_id, image_url])
-    print(outlier_urls)
     image_analysis = await analyze_segmented_image(class_name, *outlier_urls)
 
     parsed_tuples = parse_output(str(image_analysis))
@@ -128,7 +128,7 @@ async def predict_fn(input_data, model):
         existing += tags
     
     create_jsonl_from_url_list(outlier_urls, existing, "temp.jsonl")
-    sendBatch("temp.jsonl")    
+    process_batch("temp.jsonl")    
  
     return {"outlier_urls": outlier_urls, "class_name": class_name, "image_analysis": image_analysis}
 

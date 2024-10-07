@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from supabase import create_client, Client
-import openai
+from openai import OpenAI
 import os
 import re
 from dotenv import load_dotenv
@@ -13,12 +13,12 @@ supabase_url = os.getenv('SUPABASE_URL')
 # Set up Supabase client
 supabase: Client = create_client(supabase_url, supabase_key)
 
-openai.api_key = os.getenv('OPENAI_KEY')
+api_key = os.getenv('OPENAI_KEY')
+client = OpenAI(api_key=api_key)
 
 def extract_tuples(input_string):
     inner_content = input_string.strip()[1:-1]
     # Updated pattern to match inner tuples while ignoring the outermost parentheses
-    print(inner_content)
     pattern = r'\(([^,]+),\s*([^)]+)\)'
  
     # Find all tuples in the string using regex
@@ -31,7 +31,7 @@ def extract_tuples(input_string):
 
 async def analyze_segmented_image(image_class, *image_urls):
     """Analyze segmented images using OpenAI"""
-    response = await openai.ChatCompletion.acreate(
+    response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {
@@ -47,14 +47,12 @@ async def analyze_segmented_image(image_class, *image_urls):
         ],
         temperature=0.2
     )
-    output = response.choices[0].message['content']
-    print(output)
-    print(extract_tuples(output))
+    output = response.choices[0].message.content
     return extract_tuples(output)
 
 async def get_tags(image_class, existing, descriptor, definition):
     """Get tags from OpenAI"""
-    response = await openai.ChatCompletion.acreate(
+    response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {
@@ -67,4 +65,4 @@ async def get_tags(image_class, existing, descriptor, definition):
         ],
         temperature=0.8
     )
-    return response.choices[0].message['content']
+    return response.choices[0].message.content

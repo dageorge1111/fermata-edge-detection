@@ -1,39 +1,40 @@
-import openai
 import os
+from openai import OpenAI
 
-openai.api_key = os.getenv('OPENAI_KEY')
+api_key = os.getenv('OPENAI_KEY')
+client = OpenAI(api_key=api_key)
 
 def process_batch(jsonl_file_path):
   try:
-    with open(jsonl_file_path, 'rb') as f:
-      file = openai.File.create(
-        file=f,
-        purpose='batch'
-      )
+    batch_input_file = client.files.create(
+      file=open(jsonl_file_path, "rb"),
+      purpose="batch"
+    )
 
-      print(f'File uploaded: {file["id"]}')
+    print('File uploaded: ')
+    print(batch_input_file)
 
-      try:
-        os.remove(jsonl_file_path)
-        print(f'File {jsonl_file_path} deleted successfully.')
-      except Exception as e:
-        print(f'Error deleting file {jsonl_file_path}:', e)
+    try:
+      os.remove(jsonl_file_path)
+      print(f'File {jsonl_file_path} deleted successfully.')
+    except Exception as e:
+      print(f'Error deleting file {jsonl_file_path}:', e)
 
-      batch = openai.Batch.create(
-        input_file_id=file['id'],
-        endpoint='/v1/chat/completions',
-        completion_window='24h'
-      )
+    batch_input_file_id = batch_input_file.id
 
-      print(f'Batch created: {batch["id"]}')
+    returned = client.batches.create(
+      input_file_id=batch_input_file_id,
+      endpoint="/v1/chat/completions",
+      completion_window="24h",
+      metadata={
+        "description": "describe edge cases"
+      }
+    )
 
-      return batch['id']
+    print(returned)
+
+    return returned
 
   except Exception as e:
     print('Error processing batch:', e)
     raise Exception(e)
-
-if __name__ == "__main__":
-  batch_id = process_batch('path_to_your_file.jsonl')
-  print(f'Batch ID: {batch_id}')
-
