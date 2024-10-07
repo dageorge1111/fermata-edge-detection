@@ -42,7 +42,7 @@ async def analyze_segmented_image(image_class, *image_urls):
             },
             {
                 "role": "user",
-                "content": "\n".join(image_urls) 
+                "content": "\n".join([inner_list[1] for inner_list in image_urls]) 
             }
         ],
         temperature=0.2
