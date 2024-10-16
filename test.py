@@ -14,7 +14,6 @@ async def test_locally():
 
     # Simulate the input request
     input_data, bucket_name = input_fn(request_body)
-    print("hi")
     full_input_data = (input_data, bucket_name)
     # Load the ResNet model locally
     model_dir = '../resnet-50'  # Specify the directory where 'model.pth' is stored
