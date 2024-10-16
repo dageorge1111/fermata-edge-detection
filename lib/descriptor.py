@@ -38,9 +38,9 @@ def create_jsonl_from_url_list(url_list, descriptor_string, file_name):
                 "text": (
                   "You are an image analyzer who is going to look at the user's image "
                   "and classify it with the comma-separated list of tuples passed in by the user. "
-                  "Each tuple contains an id and a list of classifications for the object in the image. "
+                  "Each tuple contains an description and a list of classifications for the object in the image. "
                   "Pick one classification from each tuple and return a comma-separated list in the "
-                  "following format: (id1, classification1), (id2, classification2)..."
+                  "following format: (description, classification1), (description, classification2)..."
                 )
               }
             ]

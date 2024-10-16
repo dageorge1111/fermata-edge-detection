@@ -95,6 +95,7 @@ def parse_output(output_str):
     return [(category.strip(), description.strip()) for category, description in matches]
 
 async def predict_fn(input_data, model):
+    s3 = boto3.client('s3')
     (image_paths, object_ids, class_name), bucket_name = input_data
     latent_vectors = []
     image_dict = {} 
@@ -117,7 +118,7 @@ async def predict_fn(input_data, model):
 
     for outlier_id in outlier_ids:
         image_key = image_paths[object_ids.index(outlier_id)]
-        image_url = f"https://{bucket_name}.s3.amazonaws.com/{image_key}"  
+        image_url = response = s3.generate_presigned_url('get_object', Params={'Bucket': bucket_name, 'Key': image_key}, ExpiresIn=3600)
         outlier_urls.append([outlier_id, image_url])
     image_analysis = await analyze_segmented_image(class_name, *outlier_urls)
 
@@ -128,14 +129,13 @@ async def predict_fn(input_data, model):
         existing += tags
     
     create_jsonl_from_url_list(outlier_urls, existing, "temp.jsonl")
-    process_batch("temp.jsonl")    
+    batch_id = process_batch("temp.jsonl")    
  
-    return {"outlier_urls": outlier_urls, "class_name": class_name, "image_analysis": image_analysis}
+    return {"batch_id": batch_id}
 
 def output_fn(prediction, accept='application/json'):
     if accept == 'application/json':
-        outlier_urls = prediction['outlier_urls']
-        class_name = prediction['class_name']
-        return json.dumps({"outlier_urls": outlier_urls, "class_name": class_name}), 'application/json'
+        batch_id = prediction['batch_id']
+        return json.dumps({"batch_id": batch_id}), 'application/json'
     else:
         raise ValueError(f"Unsupported accept type: {accept}")

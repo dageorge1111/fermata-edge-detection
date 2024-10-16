@@ -11,8 +11,6 @@ def process_batch(jsonl_file_path):
       purpose="batch"
     )
 
-    print('File uploaded: ')
-    print(batch_input_file)
 
     try:
       os.remove(jsonl_file_path)
@@ -31,9 +29,7 @@ def process_batch(jsonl_file_path):
       }
     )
 
-    print(returned)
-
-    return returned
+    return returned.id
 
   except Exception as e:
     print('Error processing batch:', e)
