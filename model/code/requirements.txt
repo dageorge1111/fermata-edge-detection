@@ -1,0 +1,11 @@
+torch
+torchvision
+Pillow
+boto3
+numpy
+scikit-learn
+supabase
+python-dotenv
+openai
+flask
+

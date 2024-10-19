@@ -1,31 +1,43 @@
-import os
+import boto3
 import json
-from lib.inference import input_fn, model_fn, predict_fn, output_fn
-from io import BytesIO
-import asyncio
+import time
+from urllib.parse import urlparse
 
-# Test function to simulate running the model pipeline
-async def test_locally():
-    # Define your test request body
-    request_body = json.dumps({
-        'class_id': '602',  # Replace with an actual class_id from your Supabase table
-        'uid': '89a5e09e-22b7-422c-aeda-41bd77eddb7b'  # Replace with a valid UID
-    })
+runtime_client = boto3.client('sagemaker-runtime', region_name='us-east-1')
+s3_client = boto3.client('s3', region_name='us-east-1')
 
-    # Simulate the input request
-    input_data, bucket_name = input_fn(request_body)
-    full_input_data = (input_data, bucket_name)
-    # Load the ResNet model locally
-    model_dir = '../resnet-50'  # Specify the directory where 'model.pth' is stored
-    model = model_fn(model_dir)
+import boto3
 
-    # Run the prediction function (note the 'await')
-    result = await predict_fn(full_input_data, model)
-    # Print the output
-    output, _ = output_fn(result)
-    print(output)
+endpoint_name = 'fermata-edge-detection-endpoint'
 
-# Run the test
-if __name__ == "__main__":
-    asyncio.run(test_locally())
+input_data = {
+    'class_id': '602',
+    'uid': '89a5e09e-22b7-422c-aeda-41bd77eddb7b'
+}
 
+payload = json.dumps(input_data)
+
+response = runtime_client.invoke_endpoint_async(
+    EndpointName=endpoint_name,
+    ContentType='application/json',
+    Accept='application/json',
+    InputLocation='s3://fermata-edge-detection/input.json'
+)
+
+output_location = response['OutputLocation']
+print(f"Output will be stored at: {output_location}")
+
+parsed_url = urlparse(output_location)
+bucket_name = parsed_url.netloc
+object_key = parsed_url.path.lstrip('/')
+
+while True:
+    try:
+        response = s3_client.get_object(Bucket=bucket_name, Key=object_key)
+        result = response['Body'].read().decode('utf-8')
+        print("Inference result:")
+        print(result)
+        break
+    except s3_client.exceptions.NoSuchKey:
+        print("Result not ready yet. Waiting for 5 seconds...")
+        time.sleep(5)

@@ -1,4 +1,6 @@
 **/.env
-code/__pycache__/
+model/__pycache__/
 temp.jsonl
 inference-code.zip
+deploy.py
+model/model.tar.gz
