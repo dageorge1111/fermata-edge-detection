@@ -4,3 +4,4 @@ temp.jsonl
 inference-code.zip
 deploy.py
 model/model.tar.gz
+model/model.pth
