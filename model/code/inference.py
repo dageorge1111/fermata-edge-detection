@@ -16,7 +16,6 @@ from torchvision import models
 from sklearn.ensemble import IsolationForest
 from supabase import create_client
 from dotenv import load_dotenv
-
 import logging
 
 # Configure logging
@@ -29,14 +28,19 @@ supabase_key = os.environ['SUPABASE_KEY']
 supabase_url = os.environ['SUPABASE_URL']
 
 def model_fn(model_dir):
-    logger.info("Loading model from directory: %s", model_dir)
-    resnet = models.resnet50(weights=None)
-    resnet = nn.Sequential(*list(resnet.children())[:-1])
-    model_path = os.path.join(model_dir, 'model.pth')
-    resnet.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
-    resnet.eval()
-    logger.info("Model loaded successfully")
-    return resnet
+    try:
+        logger.info("Loading model from directory: %s", model_dir)
+        resnet = models.resnet50(weights=None)
+        resnet = nn.Sequential(*list(resnet.children())[:-1])
+        model_path = os.path.join(model_dir, 'model.pth')
+        logger.info(f"Loading model from {model_path}")
+        resnet.load_state_dict(torch.load(model_path, map_location=torch.device('cpu')))
+        resnet.eval()
+        logger.info("Model loaded successfully")
+        return resnet
+    except Exception as e:
+        logger.error("Error loading the model: %s", str(e))
+        raise
 
 def preprocess_image(image):
     logger.info("Preprocessing image")
@@ -123,7 +127,7 @@ def parse_output(output_str):
     logger.info("Parsed %d output entries", len(parsed))
     return parsed
 
-async def predict_fn(input_data, model):
+def predict_fn(input_data, model):
     logger.info("Starting predict_fn")
     s3 = boto3.client('s3')
     (image_paths, object_ids, class_name), bucket_name = input_data
@@ -157,14 +161,15 @@ async def predict_fn(input_data, model):
         outlier_urls.append([outlier_id, image_url])
     logger.info("Generated presigned URLs for outliers")
 
-    image_analysis = await analyze_segmented_image(class_name, *outlier_urls)
+    image_analysis = analyze_segmented_image(class_name, *outlier_urls)
     logger.info("Image analysis completed")
 
     parsed_tuples = parse_output(str(image_analysis))
+    logger.info(str(image_analysis))
     existing = ""
     for category, description in parsed_tuples:
         logger.info("Getting tags for category: %s, description: %s", category, description)
-        tags = await get_tags(class_name, existing, category, description)
+        tags = get_tags(class_name, existing, category, description)
         existing += tags
 
     create_jsonl_from_url_list(outlier_urls, existing, "temp.jsonl")
@@ -174,6 +179,7 @@ async def predict_fn(input_data, model):
     logger.info("Batch processed with batch_id: %s", batch_id)
 
     return {"batch_id": batch_id}
+
 
 def output_fn(prediction, accept='application/json'):
     logger.info("Starting output_fn")

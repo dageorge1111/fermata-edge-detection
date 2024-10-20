@@ -28,10 +28,9 @@ def extract_tuples(input_string):
     result = [(match[0].strip(), match[1].strip()) for match in matches]
     
     return result
-
-async def analyze_segmented_image(image_class, *image_urls):
-    """Analyze segmented images using OpenAI"""
-    response = await client.chat.completions.create(
+def analyze_segmented_image(image_class, *image_urls):
+    """Analyze segmented images using OpenAI synchronously"""
+    response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {
@@ -42,7 +41,7 @@ async def analyze_segmented_image(image_class, *image_urls):
             },
             {
                 "role": "user",
-                "content": "\n".join([inner_list[1] for inner_list in image_urls]) 
+                "content": "\n".join([inner_list[1] for inner_list in image_urls])
             }
         ],
         temperature=0.2
@@ -50,15 +49,16 @@ async def analyze_segmented_image(image_class, *image_urls):
     output = response.choices[0].message.content
     return extract_tuples(output)
 
-async def get_tags(image_class, existing, descriptor, definition):
-    """Get tags from OpenAI"""
-    response = await client.chat.completions.create(
+
+def get_tags(image_class, existing, descriptor, definition):
+    """Get tags from OpenAI synchronously"""
+    response = client.chat.completions.create(
         model="gpt-4o-mini",
         messages=[
             {
                 "role": "user",
                 "content": f"""
-                Give a list of 10 or less possible common (descriptor: {descriptor}) of {image_class}. Here is the definition of (descriptor: {descriptor}): {definition}. 
+                Give a list of 10 or less possible common (descriptor: {descriptor}) of {image_class}. Here is the definition of (descriptor: {descriptor}): {definition}.
                 The list should not overlap with the existing lists: {existing}. Present in the following form: (descriptor, [list of 10]).
                 """
             }
