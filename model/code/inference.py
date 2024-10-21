@@ -172,10 +172,11 @@ def predict_fn(input_data, model):
         tags = get_tags(class_name, existing, category, description)
         existing += tags
 
-    create_jsonl_from_url_list(outlier_urls, existing, "temp.jsonl")
+    logger.info("Finished all tags")
+    create_jsonl_from_url_list(outlier_urls, existing, "/tmp/temp.jsonl")
     logger.info("Created JSONL file 'temp.jsonl'")
 
-    batch_id = process_batch("temp.jsonl")
+    batch_id = process_batch("/tmp/temp.jsonl")
     logger.info("Batch processed with batch_id: %s", batch_id)
 
     return {"batch_id": batch_id}

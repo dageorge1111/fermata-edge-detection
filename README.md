@@ -5,4 +5,20 @@ This will analyze image datasets stored in cloud storage and pull out latent fea
 
 ## Deep Embedding:
 We used a pre-trained Resnet-50 model to pull out valuable latent features from 224 x 224 RGB iamges. We cut off the last layer of the CNN to get the latent features after pooling without the actual classification. This can be found in lib/inference.py.
-![Resnet Image](lib/RESNET-50.png)
+![Resnet Image](RESNET-50.png)
+
+## Usage:
+These steps outline how to create a sagemaker endpoint for the edge case analysis.
+1. **Navigate to the model directory:**
+   ```bash
+   cd model
+   ```
+2. **Create a tarball file for the model:**
+   ```bash
+   tar -czvf model.tar.gz model.pth code/
+   ```
+3. **Migrate model to s3 bucket:**
+   ```bash
+   aws s3 cp model.tar.gz s3://<your-bucket-name>/
+   ```
+4. **Run deploy.py**
